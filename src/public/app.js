@@ -9,7 +9,7 @@ const chatRoomDiv = document.getElementById("chat-room");
 const nicknameForm = nicknameDiv.querySelector("form");
 nicknameForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const input = nicknameForm.querySelector("input")
+  const input = nicknameForm.querySelector("input");
   const value = input.value;
   socket.emit("nickname", input.value, () => {
     nicknameDiv.classList.add("d-none");
@@ -21,14 +21,84 @@ nicknameForm.addEventListener("submit", (event) => {
 
 // Become host (create room)
 document.getElementById("host-button").addEventListener("click", (event) => {
-  socket.emit("create_room", () => {
+  socket.emit("create_room", async () => {
     selectHostDiv.classList.add("d-none");
     chatRoomDiv.classList.remove("d-none");
     document.getElementById("select-host-button").parentElement.remove();
+    await getMedia();
   });
 });
+
 // Become guest (pass to next)
-document.getElementById("guest-button").addEventListener("click", (event) => {
+document.getElementById("guest-button").addEventListener("click", async (event) => {
   selectHostDiv.classList.add("d-none");
   chatRoomDiv.classList.remove("d-none");
+  await getMedia();
 });
+
+// Videos
+const myVideoContainer = document.getElementById("my-video-container");
+const myVideo = myVideoContainer.querySelector("video");
+const peerVideo = document.getElementById("peer-video-container").querySelector("video");
+
+let myStream;
+const options = {
+  muted: false,
+  cameraOff: false,
+};
+let peerConnection;
+
+async function getMedia(videoId) {
+  try {
+    const initConstraints = {
+      audio: {
+        muted: true,
+      },
+      video: {
+        facingMode: "user",
+      },
+    };
+    const cameraConstraints = {
+      video: { deviceId: { exact: videoId } },
+    }
+    myStream = await navigator.mediaDevices.getUserMedia(
+      videoId ? cameraConstraints : initConstraints
+    );
+    myVideo.srcObject = myStream;
+    await getCameras();
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+const getCameras = async () => {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter(device => device.kind === "videoinput");
+    const currentCamera = myStream.getVideoTracks()[0];
+    const controlDropdownList = document.getElementById("controls").querySelector("ul.dropdown-menu");
+    controlDropdownList.innerHTML = ``;
+    cameras.forEach(camera => {
+      const li = document.createElement("li");
+      const button = document.createElement("button");
+      button.classList.add("dropdown-item");
+      button.innerText = camera.label;
+      if (currentCamera.label === camera.label) {
+        button.classList.add("active");
+      }
+      button.addEventListener("click", async () => {
+        await getMedia(camera.deviceId);
+        if (peerConnection) {
+          const videoTrack = myStream.getVideoTracks()[0];
+          const videoSender = peerConnection.getSenders()
+            .find(sender => sender.track.kind === "video");
+          await videoSender.replaceTrack(videoTrack);
+        }
+      });
+      li.appendChild(button);
+      controlDropdownList.appendChild(li);
+    })
+  } catch (e) {
+    console.error(e);
+  }
+};
