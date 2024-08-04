@@ -51,6 +51,20 @@ io.on("connection", (socket) => {
     done();
   });
 
+  socket.on("join_room", (room, done) => {
+    socket.join(room);
+    socket.to(room).emit("joined");
+    done();
+  });
+
+  socket.on("offer", (offer, room) => {
+    socket.to(room).emit("offer", offer);
+  });
+  socket.on("answer", (answer, room) => {
+    socket.to(room).emit("answer", answer);
+  });
+
+
   socket.on("disconnecting", () => {
     usedNicknames.delete(socket.nickname);
   })

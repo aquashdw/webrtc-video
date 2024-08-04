@@ -5,13 +5,18 @@ const nicknameDiv = document.getElementById("nickname");
 const selectHostDiv = document.getElementById("select-host");
 const chatRoomDiv = document.getElementById("chat-room");
 
+// global vars
+let room;
+let nickname;
+
 // Set Nickname
 const nicknameForm = nicknameDiv.querySelector("form");
 nicknameForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const input = nicknameForm.querySelector("input");
   const value = input.value;
-  socket.emit("nickname", input.value, () => {
+  socket.emit("nickname", value, () => {
+    nickname = value;
     nicknameDiv.classList.add("d-none");
     selectHostDiv.classList.remove("d-none");
     document.getElementById("my-nickname").innerText = `${value} (Me)`
@@ -22,10 +27,12 @@ nicknameForm.addEventListener("submit", (event) => {
 // Become host (create room)
 document.getElementById("host-button").addEventListener("click", (event) => {
   socket.emit("create_room", async () => {
+    room = nickname;
     selectHostDiv.classList.add("d-none");
     chatRoomDiv.classList.remove("d-none");
     document.getElementById("select-host-button").parentElement.remove();
     await getMedia();
+    makeConnection();
   });
 });
 
@@ -34,6 +41,7 @@ document.getElementById("guest-button").addEventListener("click", async (event) 
   selectHostDiv.classList.add("d-none");
   chatRoomDiv.classList.remove("d-none");
   await getMedia();
+  makeConnection();
 });
 
 // Videos
@@ -43,6 +51,7 @@ const peerVideo = document.getElementById("peer-video-container").querySelector(
 
 let myStream;
 let peerConnection;
+let dataChannel;
 
 async function getMedia(videoId) {
   try {
@@ -120,10 +129,73 @@ socket.on("rooms", (roomInfoList) => {
       roomButton.disabled = true;
     }
     roomUl.appendChild(roomButton);
+    roomButton.addEventListener("click", (event) => {
+      room = event.target.innerText;
+      socket.emit("join_room", room, () => {
+        selectHostModal.querySelector("button.btn-close").click();
+      });
+    })
   });
 });
 
+// Start Connection
+const handleIce = (data) => {
+  console.log("sent candidate");
+  socket.emit("ice", data.candidate, room);
+};
 
+const handleAddStream = (data) => {
+  peerVideo.srcObject = data.stream;
+};
+
+const makeConnection = () => {
+  peerConnection = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: [
+          "stun:stun.l.google.com:19302",
+          "stun:stun1.l.google.com:19302",
+          "stun:stun2.l.google.com:19302",
+          "stun:stun3.l.google.com:19302",
+        ],
+      },
+    ],
+  });
+  peerConnection.addEventListener("icecandidate", handleIce);
+  peerConnection.addEventListener("addstream", handleAddStream);
+  myStream.getTracks().forEach(track => peerConnection.addTrack(track, myStream));
+}
+
+// Guest Joins Host
+socket.on("joined", async () => {
+  dataChannel = peerConnection.createDataChannel("chat");
+  dataChannel.addEventListener("message", (event) => console.log(event.data));
+  console.log("made data channel");
+  const offer = await peerConnection.createOffer();
+  peerConnection.setLocalDescription(offer);
+  console.log("send offer");
+  socket.emit("offer", offer, room);
+});
+
+// Guest Receives Offer
+socket.on("offer", async (offer) => {
+  peerConnection.addEventListener("datachannel", (event) => {
+    dataChannel = event.channel;
+    dataChannel.addEventListener("message", console.log);
+  });
+  console.log("received offer");
+  peerConnection.setRemoteDescription(offer);
+  const answer = await peerConnection.createAnswer();
+  peerConnection.setLocalDescription(answer);
+  console.log("send answer");
+  socket.emit("answer", answer, room);
+});
+
+// Host Receives Answer
+socket.on("answer", async (answer) => {
+  console.log("received answer")
+  peerConnection.setRemoteDescription(answer);
+});
 
 
 // camera & audio toggle
