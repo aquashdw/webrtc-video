@@ -53,25 +53,28 @@ const peerVideo = document.getElementById("peer-video-container").querySelector(
 let myStream;
 let peerConnection;
 let dataChannel;
+const options = {
+  muted: false,
+  cameraOff: false,
+};
 
 async function getMedia(videoId) {
   try {
     const initConstraints = {
-      audio: {
-        muted: true,
-      },
+      audio: !options.muted,
       video: {
         facingMode: "user",
       },
     };
     const cameraConstraints = {
+      audio: !options.muted,
       video: { deviceId: { exact: videoId } },
     }
     myStream = await navigator.mediaDevices.getUserMedia(
       videoId ? cameraConstraints : initConstraints
     );
     myVideo.srcObject = myStream;
-    await getCameras();
+    if (!videoId) await getCameras();
   } catch (e) {
     console.log(e);
   }
@@ -94,6 +97,7 @@ const getCameras = async () => {
       }
       button.addEventListener("click", async () => {
         await getMedia(camera.deviceId);
+        resetCamera();
         if (peerConnection) {
           const videoTrack = myStream.getVideoTracks()[0];
           const videoSender = peerConnection.getSenders()
@@ -108,6 +112,42 @@ const getCameras = async () => {
     console.error(e);
   }
 };
+
+// camera & audio toggle
+const muteButton = document.getElementById("mute-button");
+const cameraButton = document.getElementById("camera-button");
+
+const handleMuteClick = () => {
+  if (!options.muted) {
+    muteButton.innerText = "Unmute";
+    options.muted = true;
+  } else {
+    muteButton.innerText = "Mute";
+    options.muted = false;
+  }
+  myStream.getAudioTracks()
+    .forEach(track => track.enabled = !options.muted);
+};
+
+const handleCameraClick = () => {
+  if (options.cameraOff) {
+    cameraButton.innerText = "Hide Camera"
+    options.cameraOff = false;
+  } else {
+    cameraButton.innerText = "Show Camera";
+    options.cameraOff = true;
+  }
+  myStream.getVideoTracks()
+    .forEach(track => track.enabled = !options.cameraOff);
+};
+
+const resetCamera = () => {
+  myStream.getVideoTracks()
+    .forEach(track => track.enabled = !options.cameraOff);
+}
+
+muteButton.addEventListener("click", handleMuteClick);
+cameraButton.addEventListener("click", handleCameraClick);
 
 // Load Rooms (available users)
 const selectHostModal = document.getElementById("select-host-modal");
@@ -233,42 +273,6 @@ socket.on("ice", (ice) => {
   console.log("received candidate");
   peerConnection.addIceCandidate(ice);
 });
-
-
-// camera & audio toggle
-const muteButton = document.getElementById("mute-button");
-const cameraButton = document.getElementById("camera-button");
-const options = {
-  muted: false,
-  cameraOff: false,
-};
-
-const handleMuteClick = () => {
-  myStream.getAudioTracks()
-    .forEach(track => track.enabled = !track.enabled);
-  if (!options.muted) {
-    muteButton.innerText = "Unmute";
-    options.muted = true;
-  } else {
-    muteButton.innerText = "Mute";
-    options.muted = false;
-  }
-};
-
-const handleCameraClick = () => {
-  myStream.getVideoTracks()
-    .forEach(track => track.enabled = !track.enabled);
-  if (options.cameraOff) {
-    cameraButton.innerText = "Hide Camera"
-    options.cameraOff = false;
-  } else {
-    cameraButton.innerText = "Show Camera";
-    options.cameraOff = true;
-  }
-};
-
-muteButton.addEventListener("click", handleMuteClick);
-cameraButton.addEventListener("click", handleCameraClick);
 
 // Text Chat
 const chatArea = document.getElementById("chat-offcanvas");
