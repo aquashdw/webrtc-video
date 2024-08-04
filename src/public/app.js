@@ -7,7 +7,8 @@ const chatRoomDiv = document.getElementById("chat-room");
 
 // global vars
 let room;
-let nickname;
+let myNickname;
+let peerNickname;
 
 // Set Nickname
 const nicknameForm = nicknameDiv.querySelector("form");
@@ -16,10 +17,10 @@ nicknameForm.addEventListener("submit", (event) => {
   const input = nicknameForm.querySelector("input");
   const value = input.value;
   socket.emit("nickname", value, () => {
-    nickname = value;
+    myNickname = value;
     nicknameDiv.classList.add("d-none");
     selectHostDiv.classList.remove("d-none");
-    document.getElementById("my-nickname").innerText = `${value} (Me)`
+    document.getElementById("my-nickname").innerText = `${myNickname} (Me)`
   });
   input.value = "";
 });
@@ -27,7 +28,7 @@ nicknameForm.addEventListener("submit", (event) => {
 // Become host (create room)
 document.getElementById("host-button").addEventListener("click", (event) => {
   socket.emit("create_room", async () => {
-    room = nickname;
+    room = myNickname;
     selectHostDiv.classList.add("d-none");
     chatRoomDiv.classList.remove("d-none");
     document.getElementById("select-host-button").parentElement.remove();
@@ -190,14 +191,30 @@ socket.on("offer", async (offer) => {
   console.log("send answer");
   socket.emit("answer", answer, room, () => {
     document.getElementById("select-host-button").parentElement.remove();
+    shrinkMyVideo();
   });
 });
 
 // Host Receives Answer
-socket.on("answer", async (answer) => {
+socket.on("answer", async (answer, peer) => {
   console.log("received answer")
   peerConnection.setRemoteDescription(answer);
+  peerNickname = peer;
+  shrinkMyVideo();
 });
+
+// Set My Video Smaller
+const shrinkMyVideo = () => {
+  document.getElementById("peer-nickname").innerText = peerNickname;
+  myVideo.width = 120;
+  myVideo.height = 80;
+  myVideoContainer.style.bottom = "40px";
+  myVideoContainer.style.left = "60px";
+  const meLabel = document.createElement("h5");
+  meLabel.classList.add("text-center", "text-light");
+  meLabel.innerText = "Me";
+  myVideoContainer.appendChild(meLabel);
+}
 
 // ICE
 socket.on("ice", (ice) => {

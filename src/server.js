@@ -69,8 +69,9 @@ io.on("connection", (socket) => {
   socket.on("offer", (offer, room) => {
     socket.to(room).emit("offer", offer);
   });
+
   socket.on("answer", (answer, room, done) => {
-    socket.to(room).emit("answer", answer);
+    socket.to(room).emit("answer", answer, socket.nickname);
     done();
   });
 

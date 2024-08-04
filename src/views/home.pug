@@ -34,9 +34,9 @@ html(lang="en")
                 button#guest-button.btn.btn-primary.w-100 Guest
       #chat-room.container.d-none
         // Video Chat
-        #video-area.position-relative.d-flex.flex-column.align-items-center
+        #video-area.d-flex.flex-column.align-items-center
           // Videos
-          #video-container.d-flex.justify-content-center.mb-2
+          #video-container.position-relative.d-flex.justify-content-center.mb-2
             #my-video-container.position-absolute
               video(autoplay, playsinline, width="600", height="400")
             #peer-video-container
