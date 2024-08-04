@@ -99,6 +99,31 @@ const getCameras = async () => {
   }
 };
 
+// Load Rooms (available users)
+const selectHostModal = document.getElementById("select-host-modal");
+socket.on("rooms", (roomInfoList) => {
+  const roomUl= selectHostModal.querySelector("ul");
+  roomUl.innerHTML = ``;
+  if (roomInfoList.length === 0) {
+    const noRoomLi = document.createElement("li");
+    noRoomLi.innerText = "No Rooms Yet";
+    noRoomLi.classList.add("list-group-item", "disabled");
+    roomUl.appendChild(noRoomLi);
+    return;
+  }
+  roomInfoList.forEach(roomInfo => {
+    const roomButton = document.createElement("button");
+    roomButton.innerText = roomInfo.room;
+    roomButton.classList.add("list-group-item", "list-group-item-action");
+    if (roomInfo.busy) {
+      roomButton.innerText += " (Busy)";
+      roomButton.disabled = true;
+    }
+    roomUl.appendChild(roomButton);
+  });
+});
+
+
 
 
 // camera & audio toggle
@@ -135,3 +160,6 @@ const handleCameraClick = () => {
 
 muteButton.addEventListener("click", handleMuteClick);
 cameraButton.addEventListener("click", handleCameraClick);
+
+// error
+socket.on("error", (message) => alert(message));
