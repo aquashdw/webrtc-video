@@ -170,7 +170,9 @@ const makeConnection = () => {
 // Guest Joins Host
 socket.on("joined", async () => {
   dataChannel = peerConnection.createDataChannel("chat");
-  dataChannel.addEventListener("message", (event) => console.log(event.data));
+  dataChannel.addEventListener("message", (event) => {
+    displayMessage(peerNickname, event.data, false);
+  });
   console.log("made data channel");
   const offer = await peerConnection.createOffer();
   peerConnection.setLocalDescription(offer);
@@ -182,7 +184,9 @@ socket.on("joined", async () => {
 socket.on("offer", async (offer) => {
   peerConnection.addEventListener("datachannel", (event) => {
     dataChannel = event.channel;
-    dataChannel.addEventListener("message", console.log);
+    dataChannel.addEventListener("message", (event) => {
+      displayMessage(peerNickname, event.data, false);
+    });
   });
   console.log("received offer");
   peerConnection.setRemoteDescription(offer);
@@ -193,6 +197,7 @@ socket.on("offer", async (offer) => {
     document.getElementById("select-host-button").parentElement.remove();
     peerNickname = room;
     shrinkMyVideo();
+    showTextChatButton();
   });
 });
 
@@ -202,7 +207,13 @@ socket.on("answer", async (answer, peer) => {
   peerConnection.setRemoteDescription(answer);
   peerNickname = peer;
   shrinkMyVideo();
+  showTextChatButton();
 });
+
+// Show Text Chat Button
+const showTextChatButton = () => {
+  document.getElementById("open-text-button").classList.remove("d-none");
+}
 
 // Set My Video Smaller
 const shrinkMyVideo = () => {
@@ -258,6 +269,47 @@ const handleCameraClick = () => {
 
 muteButton.addEventListener("click", handleMuteClick);
 cameraButton.addEventListener("click", handleCameraClick);
+
+// Text Chat
+const chatArea = document.getElementById("chat-offcanvas");
+chatArea.querySelector("form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const input = event.target.querySelector("input");
+  const value = input.value;
+  input.value = "";
+  if (value === "") return;
+  dataChannel.send(value);
+  displayMessage("You", value, true);
+});
+
+const chatMessageBody = document.getElementById("chat-message-area");
+const displayMessage = (nickname, message, me) => {
+  const messageDiv = document.createElement("div");
+  const nicknameHead = document.createElement("h5");
+  const messageContent = document.createElement("p");
+  messageDiv.style.maxWidth = "75%";
+  nicknameHead.innerText = nickname;
+  messageContent.classList.add("rounded", "p-2");
+  messageContent.innerText = message;
+  if (me) {
+    messageDiv.classList.add("align-self-end", "text-end");
+    messageContent.classList.add("bg-primary-subtle");
+  }
+  else {
+    messageDiv.classList.add("align-self-start");
+    messageContent.classList.add("bg-secondary-subtle");
+  }
+  messageDiv.appendChild(nicknameHead);
+  messageDiv.appendChild(messageContent);
+
+  addMessageAndScroll(messageDiv);
+}
+
+const addMessageAndScroll = (element) => {
+  chatMessageBody.appendChild(element);
+  element.scrollIntoView({ behavior: "smooth", block: "end" });
+};
+
 
 // end call
 socket.on("finish", () => {
