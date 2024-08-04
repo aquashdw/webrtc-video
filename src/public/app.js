@@ -42,10 +42,6 @@ const myVideo = myVideoContainer.querySelector("video");
 const peerVideo = document.getElementById("peer-video-container").querySelector("video");
 
 let myStream;
-const options = {
-  muted: false,
-  cameraOff: false,
-};
 let peerConnection;
 
 async function getMedia(videoId) {
@@ -102,3 +98,40 @@ const getCameras = async () => {
     console.error(e);
   }
 };
+
+
+
+// camera & audio toggle
+const muteButton = document.getElementById("mute-button");
+const cameraButton = document.getElementById("camera-button");
+const options = {
+  muted: false,
+  cameraOff: false,
+};
+
+const handleMuteClick = () => {
+  myStream.getAudioTracks()
+    .forEach(track => track.enabled = !track.enabled);
+  if (!options.muted) {
+    muteButton.innerText = "Unmute";
+    options.muted = true;
+  } else {
+    muteButton.innerText = "Mute";
+    options.muted = false;
+  }
+};
+
+const handleCameraClick = () => {
+  myStream.getVideoTracks()
+    .forEach(track => track.enabled = !track.enabled);
+  if (options.cameraOff) {
+    cameraButton.innerText = "Hide Camera"
+    options.cameraOff = false;
+  } else {
+    cameraButton.innerText = "Show Camera";
+    options.cameraOff = true;
+  }
+};
+
+muteButton.addEventListener("click", handleMuteClick);
+cameraButton.addEventListener("click", handleCameraClick);
