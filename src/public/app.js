@@ -86,7 +86,8 @@ const getCameras = async () => {
     const cameras = devices.filter(device => device.kind === "videoinput");
     const currentCamera = myStream.getVideoTracks()[0];
     const controlDropdownList = document.getElementById("controls").querySelector("ul.dropdown-menu");
-    controlDropdownList.innerHTML = ``;
+    if (cameras.length !== 0)
+      controlDropdownList.innerHTML = ``;
     cameras.forEach(camera => {
       const li = document.createElement("li");
       const button = document.createElement("button");
@@ -95,7 +96,7 @@ const getCameras = async () => {
       if (currentCamera.label === camera.label) {
         button.classList.add("active");
       }
-      button.addEventListener("click", async () => {
+      button.addEventListener("click", async (event) => {
         await getMedia(camera.deviceId);
         resetCamera();
         if (peerConnection) {
@@ -104,10 +105,14 @@ const getCameras = async () => {
             .find(sender => sender.track.kind === "video");
           await videoSender.replaceTrack(videoTrack);
         }
+        controlDropdownList.querySelectorAll("button").forEach(button => {
+          button.classList.remove("active");
+        });
+        event.target.classList.add("active");
       });
       li.appendChild(button);
       controlDropdownList.appendChild(li);
-    })
+    });
   } catch (e) {
     console.error(e);
   }
