@@ -191,6 +191,7 @@ socket.on("offer", async (offer) => {
   console.log("send answer");
   socket.emit("answer", answer, room, () => {
     document.getElementById("select-host-button").parentElement.remove();
+    peerNickname = room;
     shrinkMyVideo();
   });
 });
@@ -257,6 +258,12 @@ const handleCameraClick = () => {
 
 muteButton.addEventListener("click", handleMuteClick);
 cameraButton.addEventListener("click", handleCameraClick);
+
+// end call
+socket.on("finish", () => {
+  alert("call ended.");
+  location.reload();
+});
 
 // error
 socket.on("error", (message) => alert(message));

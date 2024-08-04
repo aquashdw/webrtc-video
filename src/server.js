@@ -25,13 +25,14 @@ const getRoomList = () => {
   const {sids, rooms} = io.sockets.adapter;
   rooms.forEach((_, room) => {
     if (sids.get(room) === undefined) roomInfoList.push({
-      room, busy: countRoom(room) > 1,
+      room, busy: busyRooms.has(room),
     })
   });
   return roomInfoList;
 }
 
 const usedNicknames = new Set();
+const busyRooms = new Set();
 
 io.on("connection", (socket) => {
   socket.emit("rooms", getRoomList());
@@ -63,6 +64,7 @@ io.on("connection", (socket) => {
     }
     socket.join(room);
     socket.to(room).emit("joined");
+    busyRooms.add(room);
     done();
   });
 
@@ -77,11 +79,21 @@ io.on("connection", (socket) => {
 
   socket.on("ice", (ice, roomName) => {
     socket.to(roomName).emit("ice", ice);
+    io.sockets.emit("rooms", getRoomList());
   })
 
   socket.on("disconnecting", () => {
     usedNicknames.delete(socket.nickname);
-  })
+    socket.rooms.forEach(room => {
+      busyRooms.delete(room);
+      socket.to(room).emit("finish");
+    });
+    io.sockets.emit("rooms", getRoomList());
+  });
+
+  socket.on("disconnect", () => {
+    io.sockets.emit("rooms", getRoomList());
+  });
 });
 
 const handleListen = () => console.log("Listening on http://127.0.0.1:3000")
