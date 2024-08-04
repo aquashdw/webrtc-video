@@ -11,12 +11,14 @@ html(lang="en")
     header.p-3.text-center
       h1 Random Face Chat
     main.d-flex.justify-content-center.align-items-center
+      // Set Nickname
       #nickname.w-50.d-none
         form.form-control.p-3
           .mb-3
             label.form-label Input Your Nickname
             input.form-control(type="text", required="true")
           button.btn.btn-primary Enter
+      // Host Select
       #select-host.w-50.d-none
         .form-control.p-3
           p Select Host or Guest:
@@ -26,28 +28,70 @@ html(lang="en")
                 button.btn.btn-primary.w-100 Host
               .col
                 button.btn.btn-primary.w-100 Guest
-      #chat-room.position-relative.w-75.d-flex.flex-column.align-items-center
-        #video-container.d-flex.justify-content-center.mb-2
-          #my-video-container.position-absolute
-            video(autoplay, playsinline, width="600", height="400")
-          #peer-video-container
-            video(autoplay, playsinline, width="600", height="400")
-        #controls.container-fluid
-          .row.gx-2.gy-2
-            .col-md-3.col-sm-6
-              button.btn.btn-primary.w-100(data-bs-toggle="modal", data-bs-target="#select-host-modal") Select Host
-            .col-md-3.col-sm-6
-              .btn-group.w-100
-                button.btn.btn-primary.w-100.dropdown-toggle(data-bs-toggle="dropdown") Select Camera
-                ul.dropdown-menu
-                  li
-                    button.dropdown-item Camera 1
-                    button.dropdown-item Camera 2
-            .col-md-3.col-sm-6
-              button.btn.btn-primary.w-100 Hide Camera
-            .col-md-3.col-sm-6
-              button.btn.btn-primary.w-100 Mute
-
+      #chat-room.container
+        // Text Chat
+        #text-area
+          #chat-offcanvas.offcanvas.offcanvas-end
+            .offcanvas-header.border-bottom
+              h4#chat-offcanvas-label.offcanvas-title Text Chat
+              button.btn-close(data-bs-dismiss="offcanvas", data-bs-target="#chat-offcanvas-label")
+            .offcanvas-body.d-flex.flex-column
+              #chat-message-area.flex-grow-1.d-flex.flex-column.px-3.overflow-auto
+                .my-2.align-self-start(style="max-width: 75%;")
+                  h6 other user
+                  p.rounded.bg-secondary-subtle.p-2 Lorem ipsum dolor sit amet.
+                .my-2.align-self-end.text-end(style="max-width: 75%;")
+                  h6 you
+                  p.rounded.bg-primary-subtle.p-2 Lorem ipsum dolor sit amet.
+                .my-2.align-self-start(style="max-width: 75%;")
+                  h6 other user
+                  p.rounded.bg-secondary-subtle.p-2 Lorem ipsum dolor sit amet.
+                .my-2.align-self-end.text-end(style="max-width: 75%;")
+                  h6 you
+                  p.rounded.bg-primary-subtle.p-2 Lorem ipsum dolor sit amet.
+                .my-2.align-self-start(style="max-width: 75%;")
+                  h6 other user
+                  p.rounded.bg-secondary-subtle.p-2 Lorem ipsum dolor sit amet.
+                .my-2.align-self-end.text-end(style="max-width: 75%;")
+                  h6 you
+                  p.rounded.bg-primary-subtle.p-2 Lorem ipsum dolor sit amet.
+                .my-2.align-self-start(style="max-width: 75%;")
+                  h6 other user
+                  p.rounded.bg-secondary-subtle.p-2 Lorem ipsum dolor sit amet.
+                .my-2.align-self-end.text-end(style="max-width: 75%;")
+                  h6 you
+                  p.rounded.bg-primary-subtle.p-2 Lorem ipsum dolor sit amet.
+              form#send-message-form.w-100
+                .input-group
+                  input.form-control
+                  button.btn.btn-primary Send
+        // Video Chat
+        #video-area.position-relative.d-flex.flex-column.align-items-center
+          // Videos
+          #video-container.d-flex.justify-content-center.mb-2
+            #my-video-container.position-absolute
+              video(autoplay, playsinline, width="600", height="400")
+            #peer-video-container
+              video(autoplay, playsinline, width="600", height="400")
+          // Video Controls
+          #controls.container-fluid
+            .row.gx-2.gy-2.mb-2
+              .col-md-3.col-sm-6
+                button.btn.btn-primary.w-100(data-bs-toggle="modal", data-bs-target="#select-host-modal") Select Host
+              .col-md-3.col-sm-6
+                .btn-group.w-100
+                  button.btn.btn-primary.w-100.dropdown-toggle(data-bs-toggle="dropdown") Select Camera
+                  ul.dropdown-menu
+                    li
+                      button.dropdown-item Camera 1
+                      button.dropdown-item Camera 2
+              .col-md-3.col-sm-6
+                button.btn.btn-primary.w-100 Hide Camera
+              .col-md-3.col-sm-6
+                button.btn.btn-primary.w-100 Mute
+            .row.gx-2.justify-content-end
+              .col-md-3.col-sm-6
+                button.btn.btn-primary.w-100(data-bs-toggle="offcanvas", data-bs-target="#chat-offcanvas") Open Text Chat
     // Modal
     section#modals
       #select-host-modal.modal.fade(tabindex="-1")
