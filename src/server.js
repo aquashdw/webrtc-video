@@ -52,6 +52,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join_room", (room, done) => {
+    const target = getRoomList().find(roomInfo => roomInfo.room === room);
+    if (!target) {
+      socket.emit("error", "Room Disappeared!!!");
+      return;
+    }
+    if (target.busy) {
+      socket.emit("error", "A Chat already Started");
+      return;
+    }
     socket.join(room);
     socket.to(room).emit("joined");
     done();
@@ -60,10 +69,14 @@ io.on("connection", (socket) => {
   socket.on("offer", (offer, room) => {
     socket.to(room).emit("offer", offer);
   });
-  socket.on("answer", (answer, room) => {
+  socket.on("answer", (answer, room, done) => {
     socket.to(room).emit("answer", answer);
+    done();
   });
 
+  socket.on("ice", (ice, roomName) => {
+    socket.to(roomName).emit("ice", ice);
+  })
 
   socket.on("disconnecting", () => {
     usedNicknames.delete(socket.nickname);

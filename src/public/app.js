@@ -188,13 +188,21 @@ socket.on("offer", async (offer) => {
   const answer = await peerConnection.createAnswer();
   peerConnection.setLocalDescription(answer);
   console.log("send answer");
-  socket.emit("answer", answer, room);
+  socket.emit("answer", answer, room, () => {
+    document.getElementById("select-host-button").parentElement.remove();
+  });
 });
 
 // Host Receives Answer
 socket.on("answer", async (answer) => {
   console.log("received answer")
   peerConnection.setRemoteDescription(answer);
+});
+
+// ICE
+socket.on("ice", (ice) => {
+  console.log("received candidate");
+  peerConnection.addIceCandidate(ice);
 });
 
 
